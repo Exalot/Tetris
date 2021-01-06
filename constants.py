@@ -2,6 +2,8 @@
 Constant values
 """
 
+import pygame
+
 debugMode = True
 
 # colors
@@ -13,6 +15,7 @@ red = (255, 0, 0)
 orange = (255, 128, 0)
 purple = (128, 0, 128)
 yellow = (255, 255, 0)
+white = (255, 255, 255)
 
 # co-ordinates
 x, y = 0, 1
@@ -113,3 +116,13 @@ colorDict = {I_PIECE_INDEX: aqua,
              S_PIECE_INDEX: green,
              Z_PIECE_INDEX: red,
              T_PIECE_INDEX: purple}
+
+pygame.font.init()
+
+# text
+score_font = pygame.font.SysFont("arial", 24)
+score_font_shift = (-250, 5)
+end_font1 = pygame.font.SysFont("arial", 128)
+end_font2 = pygame.font.SysFont("arial", 64)
+game_over_text = "GAME OVER"
+

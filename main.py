@@ -1,3 +1,7 @@
+"""
+Main file of project
+"""
+
 import pygame
 import random
 import constants
@@ -22,14 +26,31 @@ class TetrisAlgorithm(object):
         self.rotation = 0
         self.movingPieceTemplate = []
         self.movingPieceCoordinates = []
-        self.rigidPieceCoordinates = []
+        self.game_over = False
+        self.score = 0
 
     def __print_matrix(self):
         for row in self.matrix:
             print(row)
 
-    def __get_moving_piece_coordinate(self):
-        return self.movingPieceCoordinates
+    def __get_moving_piece_coordinate(self) -> list[tuple[int, int]]:
+        return copy.deepcopy(self.movingPieceCoordinates)
+
+    def __get_moving_piece_future_coordinate(self, direction: tuple[int, int]) -> list[tuple[int, int]]:
+        return [(piece_coordinate[constants.x] + direction[constants.x], piece_coordinate[constants.y] + direction[
+            constants.y]) for piece_coordinate in self.movingPieceCoordinates]
+    
+    def end_game(self):
+        """
+        ends game
+        """
+        pass
+        """
+        self.draw_matrix()
+        # self.screen.blit(scoreText, (self.screenSize[constants.x] - 150, 5))
+        endText1 = constants.end_font1.render(constants.game_over_text, True, constants.white)
+        endText2 = constants.end_font2.render(f"You achieved a score of: {self.score}", True, constants.white)
+        """
 
     def process_piece_spawn(self, piece_list: list[list[list[int]]]):
         """
@@ -39,8 +60,11 @@ class TetrisAlgorithm(object):
         for y in range(len(piece_list[self.rotation])):
             for x in range(len(piece_list[self.rotation][y])):
                 if piece_list[self.rotation][y][x]:
-                    self.movingPieceCoordinates.append((x, y))
-                    self.matrix[y][x] = piece_list[self.rotation][y][x]
+                    if not self.matrix[y][x]:
+                        self.movingPieceCoordinates.append((x, y))
+                        self.matrix[y][x] = piece_list[self.rotation][y][x]
+                    else:
+                        self.game_over = True
 
     def spawn_piece(self):
         """
@@ -60,9 +84,10 @@ class TetrisAlgorithm(object):
         :param direction: the direction of the movement
         :return: boolean representing if the selected piece can move down
         """
-        newCoordinates = self.__get_moving_piece_coordinate()
-        for x, y in newCoordinates:
-            if not (x < self.tetrisDimensions[constants.x] - 1 and y < self.tetrisDimensions[constants.y] - 1):
+        for x, y in self.__get_moving_piece_future_coordinate(direction):
+            if (x, y >= 0) and not (x < self.tetrisDimensions[constants.x] and y < self.tetrisDimensions[constants.y]):
+                return False
+            elif self.matrix[y][x] and tuple([x, y]) not in self.movingPieceCoordinates:
                 return False
         return True
 
@@ -72,13 +97,9 @@ class TetrisAlgorithm(object):
         :param direction: the direction of the movement
         """
         color = self.matrix[self.movingPieceCoordinates[0][constants.y]][self.movingPieceCoordinates[0][constants.x]]
-        oldCoordinates = copy.deepcopy(self.__get_moving_piece_coordinate())
-        newCoordinates = copy.deepcopy(self.__get_moving_piece_coordinate())
+        newCoordinates = self.__get_moving_piece_future_coordinate(direction)
         for x, y in self.movingPieceCoordinates:
             self.matrix[y][x] = 0
-        for coordinateIndex in range(len(newCoordinates)):
-            newCoordinates[coordinateIndex] = (oldCoordinates[coordinateIndex][constants.x] + direction[constants.x],
-                                               oldCoordinates[coordinateIndex][constants.y] + direction[constants.y])
         for x, y in newCoordinates:
             self.matrix[y][x] = color
         self.movingPieceCoordinates = newCoordinates
@@ -110,6 +131,7 @@ class TetrisAlgorithm(object):
         """
         Draws the matrix on the screen
         """
+        self.screen.fill(constants.black)
         for y in range(len(self.matrix)):
             for x in range(len(self.matrix[y])):
                 if self.matrix[y][x] != 0:
@@ -124,23 +146,44 @@ class TetrisAlgorithm(object):
         """
         pygame.init()
         pygame.display.set_caption("Tetris Algorithm")
+        self.spawn_piece()
         running = True
         # game loop
         while running:
-            # event loop
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    running = False
-                elif event.type == pygame.KEYDOWN and constants.debugMode:
-                    if event.key == pygame.K_ESCAPE:
+            if not self.game_over:
+                # event loop
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
                         pygame.quit()
                         running = False
-                    elif event.key == pygame.K_TAB:
-                        self.spawn_piece()
-                    elif event.key == pygame.K_SPACE:
-                        self.hard_drop()
-            self.draw_matrix()
+                    elif event.type == pygame.KEYDOWN and constants.debugMode:
+                        if event.key == pygame.K_ESCAPE:
+                            pygame.quit()
+                            running = False
+                        elif event.key == pygame.K_SPACE:
+                            self.hard_drop()
+                        elif event.key == pygame.K_DOWN:
+                            if self.can_move_direction(constants.DOWN):
+                                self.move_direction(constants.DOWN)
+                        elif event.key == pygame.K_RIGHT:
+                            if self.can_move_direction(constants.RIGHT):
+                                self.move_direction(constants.RIGHT)
+                        elif event.key == pygame.K_LEFT:
+                            if self.can_move_direction(constants.LEFT):
+                                self.move_direction(constants.LEFT)
+                self.draw_matrix()
+                scoreText = constants.score_font.render(f"Score: {self.score}", True, constants.white)
+                self.screen.blit(scoreText, (self.screenSize[constants.x] - constants.score_font_shift[constants.x],
+                                             constants.score_font_shift[constants.y]))
+            else:
+                print("Game Over")
+                for event in pygame.event.get():
+                    if event.key == pygame.QUIT:
+                        pygame.quit()
+                        running = False
+                    elif event.key == pygame.K_ESCAPE:
+                        pygame.quit()
+                        running = False
             pygame.display.update()
             self.clock.tick(120)
 
