@@ -28,6 +28,9 @@ DOWN = Vector2(0, 1)
 RIGHT = Vector2(1, 0)
 LEFT = Vector2(-1, 0)
 
+# Delay Time
+delayTime = 1.5
+
 # TODO: https://prnt.sc/bvCqMQiGrpWC blue rotation from last to normal
 #       https://prnt.sc/jiPU4hdiGfPH first green rotation DONE
 #       https://prnt.sc/t_Ic9NnBpoQh second red rotation DONE
@@ -187,7 +190,7 @@ pygame.font.init()
 
 # text
 score_font = pygame.font.SysFont("arial", 24)
-score_font_shift = Vector2(-250, 5)
+score_font_shift = Vector2(250, 5)
 end_font1 = pygame.font.SysFont("arial", 128)
 end_font2 = pygame.font.SysFont("arial", 64)
 game_over_text = "GAME OVER"

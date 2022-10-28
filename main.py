@@ -29,6 +29,7 @@ class TetrisAlgorithm(object):
         self.movingPieceCoordinates = []
         self.game_over = False
         self.score = 0
+        self.moveDownTime = pygame.time.get_ticks()
 
     def __print_matrix(self) -> None:
         for row in self.matrix:
@@ -102,6 +103,8 @@ class TetrisAlgorithm(object):
         moves the moving piece in specified direction
         :param direction: the direction of the movement
         """
+        if direction == constants.DOWN:
+            self.moveDownTime = pygame.time.get_ticks()
         color = self.matrix[self.movingPieceCoordinates[0].y][self.movingPieceCoordinates[0].x]
         new_coordinates = self.__get_moving_piece_future_coordinate(direction)
         for movingPiece in self.movingPieceCoordinates:
@@ -117,7 +120,20 @@ class TetrisAlgorithm(object):
         """
         while self.can_move_direction(constants.DOWN):
             self.move_direction(constants.DOWN)
+        uniqueYs = []
+        filledLines = []
+        """
+        for coordinate in self.movingPieceCoordinates:
+            if coordinate.y not in uniqueYs:
+                uniqueYs.append(coordinate.y)
+        for uniqueY in uniqueYs:
+            if self.check_horizontal_line_helper(uniqueY):
+                filledLines.append(uniqueY)
+        self.process_filled_lines(filledLines)
+        """
         self.spawn_piece()
+        self.rotation = 0
+        self.moveDownTime = pygame.time.get_ticks()
 
     def __cleanMovingPieces(self) -> None:
         for movingCoordinate in self.movingPieceCoordinates:
@@ -183,6 +199,7 @@ class TetrisAlgorithm(object):
                                        blockSize)
                     pygame.draw.rect(self.screen, constants.colorDict[self.matrix[y][x]], rect)
 
+    # def process_filled_lines(self, filledLineIndexes: list[int]) -> None:
     def process_filled_lines(self) -> None:
         filledLineIndexes = self.check_filled_line()
         if len(filledLineIndexes) > 0:
@@ -193,7 +210,7 @@ class TetrisAlgorithm(object):
             filledLineIndexes.sort()
             for index in filledLineIndexes:
                 self.matrix.pop(index)
-                self.matrix.insert(0, [0 for i in range(self.tetrisDimensions.y)])
+                self.matrix.insert(0, [0 for i in range(self.tetrisDimensions.x)])
             for coordinate in self.movingPieceCoordinates:
                 self.matrix[coordinate.y][coordinate.x] = color
 
@@ -206,10 +223,17 @@ class TetrisAlgorithm(object):
 
     def check_horizontal_line_helper(self, lineIndex) -> bool:
         line = self.matrix[lineIndex]
-        for num in line:
-            if num == 0:
+        for x in range(len(line)):
+            if self.matrix[lineIndex][x] == 0 or Vector2(x, lineIndex) in self.movingPieceCoordinates:
                 return False
         return True
+
+    def processTimers(self):
+        if (pygame.time.get_ticks() - self.moveDownTime) / 1000 > constants.delayTime:
+            if self.can_move_direction(constants.DOWN):
+                self.move_direction(constants.DOWN)
+            else:
+                self.hard_drop()
 
     def main(self) -> None:
         """
@@ -221,7 +245,7 @@ class TetrisAlgorithm(object):
         running = True
         # game loop
         while running:
-            print(self.score)
+            #print(self.score)
             if not self.game_over:
                 # event loop
                 for event in pygame.event.get():
@@ -234,10 +258,11 @@ class TetrisAlgorithm(object):
                             running = False
                         elif event.key == pygame.K_SPACE:
                             self.hard_drop()
-                            # TODO: Make hard drop set rotation to 0
                         elif event.key == pygame.K_DOWN:
                             if self.can_move_direction(constants.DOWN):
                                 self.move_direction(constants.DOWN)
+                            else:
+                                self.hard_drop()
                         elif event.key == pygame.K_RIGHT:
                             if self.can_move_direction(constants.RIGHT):
                                 self.move_direction(constants.RIGHT)
@@ -250,11 +275,14 @@ class TetrisAlgorithm(object):
                         elif event.key == pygame.K_z:
                             self.rotate(False)
                             pass  # TODO: Implement counter clockwise rotation
+                self.processTimers()
                 self.process_filled_lines()
                 self.draw_matrix()
+                #print(self.matrix)
                 score_text = constants.score_font.render(f"Score: {self.score}", True, constants.white)
                 self.screen.blit(score_text, (self.screenSize.x - constants.score_font_shift.x,
                                               constants.score_font_shift.y))
+                # self.screen.blit(score_text,(250, 50))
             else:
                 print("Game Over")
                 for event in pygame.event.get():

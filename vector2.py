@@ -56,5 +56,8 @@ class Vector2:
     def normalized(self):
         return Vector2(self.x / self.magnitude(), self.y / self.magnitude())
 
+    def opposite(self):
+        return Vector2(-self.x, -self.y)
+
     def to_tuple(self) -> tuple[int, int]:
         return self.x, self.y
