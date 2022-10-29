@@ -18,7 +18,6 @@ class TetrisAlgorithm(object):
     def __init__(self) -> None:
         self.tetrisDimensions = Vector2(10, 24)
         self.blockSize = 40
-        self.blockOffset = Vector2(0, 0)
         self.screenSize = Vector2(self.tetrisDimensions.x * self.blockSize, self.tetrisDimensions.y * self.blockSize)
         self.screen = pygame.display.set_mode(self.screenSize.to_tuple())
         self.clock = pygame.time.Clock()
@@ -61,7 +60,7 @@ class TetrisAlgorithm(object):
         for y in range(len(piece_list[0][self.rotation])):
             for x in range(len(piece_list[0][self.rotation][y])):
                 if piece_list[0][self.rotation][y][x]:
-                    if not self.matrix[y][x]:
+                    if self.matrix[y][x] == 0:
                         self.movingPieceCoordinates.append(Vector2(x, y))
                         self.matrix[y][x] = piece_list[0][self.rotation][y][x]
                     else:
@@ -73,7 +72,6 @@ class TetrisAlgorithm(object):
         """
         self.movingPieceCoordinates.clear()
         self.rotation = 0
-        self.blockOffset = Vector2(0, 0)
         if len(self.pieceList) == 0:
             self.pieceList = constants.get_pieces()
         self.movingPieceTemplate = random.choice(self.pieceList)
@@ -112,7 +110,6 @@ class TetrisAlgorithm(object):
         for newPiece in new_coordinates:
             self.matrix[newPiece.y][newPiece.x] = color
         self.movingPieceCoordinates = new_coordinates
-        self.blockOffset += direction
 
     def hard_drop(self) -> None:
         """
@@ -139,16 +136,41 @@ class TetrisAlgorithm(object):
         for movingCoordinate in self.movingPieceCoordinates:
             self.matrix[movingCoordinate.y][movingCoordinate.x] = 0
 
+    def __showHardDropped(self) -> None:
+        if self.can_move_direction(constants.DOWN):
+            numOfDowns = 0
+            done = False
+            movedPieces = copy.deepcopy(self.movingPieceCoordinates)
+            while not done:
+                numOfDowns += 1
+                for movedPiece in movedPieces:
+                    if movedPiece.y+numOfDowns+1 >= self.tetrisDimensions.y:
+                        done = True
+                    elif self.matrix[movedPiece.y+numOfDowns+1][movedPiece.x] > 0 and \
+                            Vector2(movedPiece.x, movedPiece.y+numOfDowns+1) not in self.movingPieceCoordinates:
+                        done = True
+            lightColor = -self.matrix[self.movingPieceCoordinates[0].y][self.movingPieceCoordinates[0].x]
+            for droppedPiece in movedPieces:
+                self.matrix[droppedPiece.y+numOfDowns][droppedPiece.x] = lightColor
+
     # TODO: FIX THIS
     def rotate(self, clockwise: bool) -> None:
         """
         rotates the selected piece
         """
+        if not clockwise:
+            if self.rotation != 0:
+                self.rotation = (self.rotation - 1) % len(self.movingPieceTemplate[0])
+            else:
+                self.rotation = len(self.movingPieceTemplate[0]) - 1
         rotationMove = self.movingPieceTemplate[1][self.rotation]
         coordinateTemp = copy.deepcopy(self.movingPieceCoordinates)
         # not square do this else dont
         for i in range(len(coordinateTemp)):
-            coordinateTemp[i] += rotationMove[i]
+            if clockwise:
+                coordinateTemp[i] += rotationMove[i]
+            else:
+                coordinateTemp[i] += rotationMove[i].opposite()
         if self.rotationValid(coordinateTemp):
             color = self.matrix[self.movingPieceCoordinates[0].y][self.movingPieceCoordinates[0].x]
             self.__cleanMovingPieces()
@@ -157,11 +179,6 @@ class TetrisAlgorithm(object):
                 self.matrix[coordinate.y][coordinate.x] = color
             if clockwise:
                 self.rotation = (self.rotation + 1) % len(self.movingPieceTemplate[1])
-            else:
-                if self.rotation != 0:
-                    self.rotation = (self.rotation - 1) % len(self.movingPieceTemplate[0])
-                else:
-                    self.rotation = len(self.movingPieceTemplate[0]) - 1
 
     def rotationValid(self, newMovingCoordinates: list[Vector2]) -> bool:
         matrixTemp = copy.deepcopy(self.matrix)
@@ -198,6 +215,8 @@ class TetrisAlgorithm(object):
                     rect = pygame.Rect(co_ordinates.x, co_ordinates.y, self.blockSize, self.
                                        blockSize)
                     pygame.draw.rect(self.screen, constants.colorDict[self.matrix[y][x]], rect)
+                    if self.matrix[y][x] < 0:
+                        self.matrix[y][x] = 0
 
     # def process_filled_lines(self, filledLineIndexes: list[int]) -> None:
     def process_filled_lines(self) -> None:
@@ -271,14 +290,16 @@ class TetrisAlgorithm(object):
                                 self.move_direction(constants.LEFT)
                         elif event.key == pygame.K_x:
                             self.rotate(True)
-                            pass  # TODO: Implement clockwise rotation
                         elif event.key == pygame.K_z:
+                            # TODO: Implement counter clockwise rotation
                             self.rotate(False)
-                            pass  # TODO: Implement counter clockwise rotation
                 self.processTimers()
                 self.process_filled_lines()
+                self.__showHardDropped()
+                # TODO: MAKE VISUAL INDICATOR OF HARD DROP POSITION
+                # TODO: MAKE A GRID
+                # TODO: Add Sound
                 self.draw_matrix()
-                #print(self.matrix)
                 score_text = constants.score_font.render(f"Score: {self.score}", True, constants.white)
                 self.screen.blit(score_text, (self.screenSize.x - constants.score_font_shift.x,
                                               constants.score_font_shift.y))

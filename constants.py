@@ -15,10 +15,29 @@ aqua = (0, 255, 255)
 blue = (0, 0, 255)
 green = (0, 255, 0)
 red = (255, 0, 0)
-orange = (255, 128, 0)
-purple = (128, 0, 128)
+orange = (255, 127, 0)
+purple = (127, 0, 127)
 yellow = (255, 255, 0)
 white = (255, 255, 255)
+
+
+def findLight(color: tuple[int, int, int]) -> tuple[int, int, int]:
+    r1, g1, b1 = color
+    r2, g2, b2 = white
+    newR = int((r1 + r2) / 2)
+    newG = int((g1 + g2) / 2)
+    newB = int((b1 + b2) / 2)
+    return newR, newG, newB
+
+
+# Lighter versions of the colors to indicate their position after a hard drop
+lightAqua = findLight(aqua)
+lightBlue = findLight(blue)
+lightGreen = findLight(green)
+lightRed = findLight(red)
+lightOrange = findLight(orange)
+lightPurple = findLight(purple)
+lightYellow = findLight(yellow)
 
 # co-ordinates
 x, y = 0, 1
@@ -53,7 +72,7 @@ I_PIECE = [[[[0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
             [[0, 0, 0, 1, 1, 1, 1, 0, 0, 0]]],
 
            [[Vector2(-2, 0), Vector2(-1, -1), Vector2(0, -2), Vector2(1, -3)],
-           [Vector2(2, 0), Vector2(1, 1), Vector2(0, 2), Vector2(-1, 3)]]]
+            [Vector2(2, 0), Vector2(1, 1), Vector2(0, 2), Vector2(-1, 3)]]]
 
 J_PIECE = [[[[0, 0, 0, 0, 0, 2, 0, 0, 0, 0],
              [0, 0, 0, 0, 0, 2, 0, 0, 0, 0],
@@ -163,6 +182,7 @@ T_PIECE = [[[[0, 0, 0, 7, 7, 7, 0, 0, 0, 0],
                     [Vector2(-1, 0), Vector2(0, 0), Vector2(0, 0), Vector2(-2, -1)],
                     [Vector2(0, 0), Vector2(0, 0), Vector2(0, 0), Vector2(-1, -1)]]"""
 
+
 # rotation vectors
 
 
@@ -179,16 +199,27 @@ I_PIECE_INDEX, J_PIECE_INDEX, L_PIECE_INDEX, O_PIECE_INDEX, S_PIECE_INDEX, Z_PIE
 
 # color dictionary
 colorDict = {I_PIECE_INDEX: aqua,
+             -I_PIECE_INDEX: lightAqua,
              J_PIECE_INDEX: blue,
+             -J_PIECE_INDEX: lightBlue,
              L_PIECE_INDEX: orange,
+             -L_PIECE_INDEX: lightOrange,
              O_PIECE_INDEX: yellow,
+             -O_PIECE_INDEX: lightYellow,
              S_PIECE_INDEX: green,
+             -S_PIECE_INDEX: lightGreen,
              Z_PIECE_INDEX: red,
-             T_PIECE_INDEX: purple}
+             -Z_PIECE_INDEX: lightRed,
+             T_PIECE_INDEX: purple,
+             -T_PIECE_INDEX: lightPurple}
 
 pygame.font.init()
 
 # text
+"""co_ordinates = self.find_block_coordinates(Vector2(x, y))
+                    rect = pygame.Rect(co_ordinates.x, co_ordinates.y, self.blockSize, self.
+                                       blockSize)
+                    pygame.draw.rect(self.screen, constants.colorDict[self.matrix[y][x]], rect)"""
 score_font = pygame.font.SysFont("arial", 24)
 score_font_shift = Vector2(250, 5)
 end_font1 = pygame.font.SysFont("arial", 128)
