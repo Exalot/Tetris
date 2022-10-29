@@ -29,6 +29,7 @@ class TetrisAlgorithm(object):
         self.game_over = False
         self.score = 0
         self.moveDownTime = pygame.time.get_ticks()
+        self.delayTime = 1.5
 
     def __print_matrix(self) -> None:
         for row in self.matrix:
@@ -90,9 +91,8 @@ class TetrisAlgorithm(object):
             if (futurePiece.x, futurePiece.y >= 0) and not (futurePiece.x < self.tetrisDimensions.x and futurePiece.y <
                                                             self.tetrisDimensions.y):
                 return False
-            elif self.matrix[futurePiece.y][futurePiece.x] and True not in [Vector2(futurePiece.x, futurePiece.y) ==
-                                                                            movingBlock for movingBlock in
-                                                                            self.movingPieceCoordinates]:
+            elif self.matrix[futurePiece.y][futurePiece.x] > 0 and Vector2(futurePiece.x, futurePiece.y) not in \
+                    self.movingPieceCoordinates:
                 return False
         return True
 
@@ -248,7 +248,9 @@ class TetrisAlgorithm(object):
         return True
 
     def processTimers(self):
-        if (pygame.time.get_ticks() - self.moveDownTime) / 1000 > constants.delayTime:
+        if self.delayTime > constants.lowestDelayTime:
+            self.delayTime = constants.startingDelayTime - (pygame.time.get_ticks() / 1000) * constants.decreasePerSec
+        if (pygame.time.get_ticks() - self.moveDownTime) / 1000 > self.delayTime:
             if self.can_move_direction(constants.DOWN):
                 self.move_direction(constants.DOWN)
             else:
@@ -296,9 +298,10 @@ class TetrisAlgorithm(object):
                 self.processTimers()
                 self.process_filled_lines()
                 self.__showHardDropped()
-                # TODO: MAKE VISUAL INDICATOR OF HARD DROP POSITION
                 # TODO: MAKE A GRID
                 # TODO: Add Sound
+                # TODO: Make next piece indicator
+                # TODO: Make a left and right attempt of each edge tetris rotation
                 self.draw_matrix()
                 score_text = constants.score_font.render(f"Score: {self.score}", True, constants.white)
                 self.screen.blit(score_text, (self.screenSize.x - constants.score_font_shift.x,

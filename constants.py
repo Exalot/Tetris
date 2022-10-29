@@ -47,8 +47,10 @@ DOWN = Vector2(0, 1)
 RIGHT = Vector2(1, 0)
 LEFT = Vector2(-1, 0)
 
-# Delay Time
-delayTime = 1.5
+# Drop Time Management
+startingDelayTime = 1.5
+decreasePerSec = 1 / 45
+lowestDelayTime = 0.5
 
 # TODO: https://prnt.sc/bvCqMQiGrpWC blue rotation from last to normal
 #       https://prnt.sc/jiPU4hdiGfPH first green rotation DONE
