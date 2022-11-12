@@ -10,7 +10,7 @@ debugMode = True
 zeroVector = Vector2(0, 0)
 
 # Game States
-mainMenu, scores, inGame, pausedGame, gameOver = range(0, 5)
+mainMenu, scoreMenu, inGame, pausedGame, gameOver = range(0, 5)
 
 # colors
 black = (0, 0, 0)
@@ -25,6 +25,7 @@ white = (255, 255, 255)
 grey = (63, 63, 63)
 dark_grey = (23, 23, 23)
 light_grey = (191, 191, 191)
+
 
 def findLight(color: tuple[int, int, int]) -> tuple[int, int, int]:
     r1, g1, b1 = color
@@ -44,20 +45,27 @@ lightOrange = findLight(orange)
 lightPurple = findLight(purple)
 lightYellow = findLight(yellow)
 
+menuTetrisTextPos = Vector2(100, 50)
+
 # Main Menu Buttons
-menuPlayButtonOffset = Vector2(150, 300)
+menuPlayButtonOffset = Vector2(150, 350)
 endGameButtonOffset = Vector2(200, 0)
-menuPlayButtonTextPos = Vector2(315, 280)
+menuPlayButtonTextPos = Vector2(315, 335)
 
-menuScoresButtonOffset = Vector2(150, 500)
-menuScoresButtonTextPos = Vector2(275, 480)
+menuScoresButtonOffset = Vector2(150, 550)
+menuScoresButtonTextPos = Vector2(275, 535)
 
-menuQuitButtonOffset = Vector2(150, 700)
-menuQuitButtonTextPos = Vector2(315, 680)
+menuQuitButtonOffset = Vector2(150, 750)
+menuQuitButtonTextPos = Vector2(315, 735)
+
+# Score Button
+
+scoresTitleOffset = Vector2(185, 50)
+scoresOffsets = [Vector2(200, 275), Vector2(200, 400), Vector2(200, 525), Vector2(200, 650), Vector2(200, 775)]
+textBoxOffset = Vector2(55, 10)
+scoreBoxSize = Vector2(400, 85)
 
 # Paused Game Buttons
-
- # endGameButtonSize = Vector2(fullScreenSize.x - endGameButtonOffset.x * 2, 100)
 
 pausedPlatformOffsetTop = Vector2(120, 200)
 
@@ -397,18 +405,20 @@ colorDict = {I_PIECE_INDEX: aqua,
 pygame.font.init()
 
 # fonts
-"""co_ordinates = self.find_block_coordinates(Vector2(x, y))
-                    rect = pygame.Rect(co_ordinates.x, co_ordinates.y, self.blockSize, self.
-                                       blockSize)
-                    pygame.draw.rect(self.screen, constants.colorDict[self.matrix[y][x]], rect)"""
+score_font = pygame.font.SysFont("arial", 64)
+menu_score_font = pygame.font.SysFont("arial", 40)
+
+#tetris_menu_font_path = pygame.font.match_font(, 0, 0)
+tetris_menu_font = pygame.font.Font("AnkhSanctuary-nROx4.ttf", 200)
 menu_font = pygame.font.SysFont("comic sans", 86)
+scores_title_font = pygame.font.SysFont("comic sans", 128)
 paused_font = pygame.font.SysFont("comic sans", 64)
 
 end_game_font_1 = pygame.font.SysFont("comic sans", 54)
 end_game_font_2 = pygame.font.SysFont("comic sans", 154)
 
-score_font = pygame.font.SysFont("arial", 40)
-score_font_shift = Vector2(275, 10)
+menu_score_font = pygame.font.SysFont("arial", 40)
+menu_score_font_shift = Vector2(275, 10)
 side_bar_font = pygame.font.SysFont("arial", 32)
 stored_piece_font_shift = Vector2(135, 30)
 next_piece_font_shift = Vector2(20, 30)

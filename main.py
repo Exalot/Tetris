@@ -103,12 +103,14 @@ class TetrisAlgorithm(object):
                                   constants.menuButtonSize.x, constants.menuButtonSize.y)
         quitButton = pygame.Rect(constants.menuQuitButtonOffset.x, constants.menuQuitButtonOffset.y,
                                  constants.menuButtonSize.x, constants.menuButtonSize.y)
+        tetris_text = constants.tetris_menu_font.render("TETRIS", True, constants.red)
         play_text = constants.menu_font.render("Play", True, constants.white)
         scores_text = constants.menu_font.render("Scores", True, constants.white)
         quit_text = constants.menu_font.render("Quit", True, constants.white)
         pygame.draw.rect(self.screen, constants.red, playButton)
         pygame.draw.rect(self.screen, constants.green, scoreButton)
         pygame.draw.rect(self.screen, constants.blue, quitButton)
+        self.screen.blit(tetris_text, constants.menuTetrisTextPos.to_tuple())
         self.screen.blit(play_text, (constants.menuPlayButtonTextPos.x, constants.menuPlayButtonTextPos.y))
         self.screen.blit(scores_text, (constants.menuScoresButtonTextPos.x, constants.menuScoresButtonTextPos.y))
         self.screen.blit(quit_text, (constants.menuQuitButtonTextPos.x, constants.menuQuitButtonTextPos.y))
@@ -120,8 +122,29 @@ class TetrisAlgorithm(object):
                 if playButton.collidepoint(self.mousePos.x, self.mousePos.y):
                     self.state = constants.inGame
                     self.initiate_game()
+                elif scoreButton.collidepoint(self.mousePos.x, self.mousePos.y):
+                    self.state = constants.scoreMenu
                 elif quitButton.collidepoint(self.mousePos.x, self.mousePos.y):
                     self.running = False
+
+    def process_scores(self):
+        self.screen.fill(constants.black)
+        scores = []
+        score_title = constants.scores_title_font.render("Scores", True, constants.blue)
+        self.screen.blit(score_title, constants.scoresTitleOffset.to_tuple())
+        for i in range(min(len(self.scores), 5)):
+            scores.append(pygame.Rect(constants.scoresOffsets[i].x, constants.scoresOffsets[i].y,
+                                 constants.scoreBoxSize.x, constants.scoreBoxSize.y))
+            pygame.draw.rect(self.screen, constants.red, scores[i])
+            score_text_str = "0" * (8 - len(str(self.scores[i]))) + str(self.scores[i])
+            score_text = constants.score_font.render(score_text_str, True, constants.white)
+            self.screen.blit(score_text, (constants.scoresOffsets[i] + constants.textBoxOffset).to_tuple())
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.running = False
+            elif event.type == pygame.KEYDOWN:
+                self.state = constants.mainMenu
+        # elif event.type == pygame.MOUSEBUTTONDOWN:
 
     def process_game(self):
         self.screen.fill(constants.black)
@@ -152,7 +175,6 @@ class TetrisAlgorithm(object):
                 elif event.key == pygame.K_c:
                     if not self.swapped and self.storedPieceTemplate != self.movingPieceTemplate:
                         self.swap_pieces()
-        # print(self.nextPieceTemplate)
         self.process_timers()
         self.process_filled_lines()
         self.__showHardDropped()
@@ -160,11 +182,11 @@ class TetrisAlgorithm(object):
         self.draw_side_bars()
         self.draw_grid()
         if self.state == constants.inGame:
-            score_text = constants.score_font.render(f"Score: {self.currentGameScore}", True,
-                                                     constants.light_grey)
+            score_text = constants.menu_score_font.render(f"Score: {self.currentGameScore}", True,
+                                                          constants.light_grey)
             self.screen.blit(score_text, (
-                constants.gameScreenSize.x + constants.sideBarSize.x - constants.score_font_shift.x,
-                constants.score_font_shift.y))
+                constants.gameScreenSize.x + constants.sideBarSize.x - constants.menu_score_font_shift.x,
+                constants.menu_score_font_shift.y))
 
     def process_paused_screen(self):
         platform = pygame.Rect(constants.pausedPlatformOffsetTop.x, constants.pausedPlatformOffsetTop.y,
@@ -243,14 +265,11 @@ class TetrisAlgorithm(object):
                     self.process_menu()
                 elif quit_button.collidepoint(self.mousePos.x, self.mousePos.y):
                     self.running = False
-            """elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE and constants.debugMode:
-                    self.running = False"""
         # TODO: Implement this
 
     # TODO: make can_process_piece_spawn function
     # TODO: Fix error with determining end of game
-    def process_piece_spawn(self, piece_template: list[list[list[int]]]) -> None:
+    def process_piece_spawn(self, piece_template: list[list[list[int]]]) -> bool:
         """
         finds the co-ordinates of the new moving pieces and add their colors to the matrix
         :param piece_template: The piece selected from the list of pieces
@@ -267,10 +286,11 @@ class TetrisAlgorithm(object):
                         self.scoreFile.write(f"{self.currentGameScore}\n")
                         # find correct position of the score
                         self.scores.append(self.currentGameScore)
-                        return None
+                        self.scores.sort(reverse=True)
+                        return False
         for moving_coordinate in self.movingPieceCoordinates:
             self.matrix[moving_coordinate.y][moving_coordinate.x] = piece_template[0][self.rotation][moving_coordinate.y][moving_coordinate.x]
-        return None
+        return True
 
     def start_pieces(self) -> None:
         self.pieceList = constants.get_pieces()
@@ -353,17 +373,17 @@ class TetrisAlgorithm(object):
                 filledLines.append(uniqueY)
         self.process_filled_lines(filledLines)
         """
-        self.spawn_piece()
         self.rotation = 0
         self.moveDownTime = pygame.time.get_ticks()
         self.swapped = False
+        self.spawn_piece()
 
     def __cleanMovingPieces(self) -> None:
         for movingCoordinate in self.movingPieceCoordinates:
             self.matrix[movingCoordinate.y][movingCoordinate.x] = 0
 
     def __showHardDropped(self) -> None:
-        if self.can_move_direction(constants.DOWN):
+        if self.can_move_direction(constants.DOWN) and self.state == constants.inGame:
             numOfDowns = 0
             done = False
             movedPieces = copy.deepcopy(self.movingPieceCoordinates)
@@ -537,7 +557,7 @@ class TetrisAlgorithm(object):
         """
         pygame.init()
         pygame.display.set_caption("Tetris")
-        print(self.scores)
+        # print(self.scores)
         self.process_menu()
         # game loop
         # TODO: Add Sound
@@ -546,6 +566,8 @@ class TetrisAlgorithm(object):
         # TODO: Change store functions to held
         # TODO: Insert new scores into correct position
         # TODO: Make Scores tab
+        # TODO: Implement T spin
+        # TODO: find out how text blitzing works and if it is useful display_surface.blit(text1, textRect1)
         while self.running:
             pygame.display.update()
             self.clock.tick(120)
@@ -560,6 +582,8 @@ class TetrisAlgorithm(object):
                                           constants.menuButtonSize.x, constants.menuButtonSize.y)
                 quitButton = pygame.Rect(constants.menuQuitButtonOffset.x, constants.menuQuitButtonOffset.y,
                                           constants.menuButtonSize.x, constants.menuButtonSize.y)"""
+            elif self.state == constants.scoreMenu:
+                self.process_scores()
             elif self.state == constants.inGame:
                 self.process_game()
                 # self.screen.blit(score_text,(250, 50))
